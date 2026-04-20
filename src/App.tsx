@@ -8,17 +8,22 @@ import { Auth } from './pages/Auth';
 import { Leaderboard } from './pages/Leaderboard';
 import { Contact } from './pages/Contact';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LogOut, User as UserIcon, Trophy, LayoutDashboard, Home as HomeIcon, Settings, Medal, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { LogOut, User as UserIcon, Trophy, LayoutDashboard, Home as HomeIcon, Settings, Medal, MessageSquare, Menu, X } from 'lucide-react';
 import { auth } from './lib/firebase';
 import { signOut } from 'firebase/auth';
+import { getRank } from './lib/utils';
 
 function Layout({ children }: { children: React.ReactNode }) {
   const { user, userData } = useAuth();
   const location = window.location.pathname;
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  const closeMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <div className="min-h-screen flex bg-bg-dark text-text-main font-sans">
-      {/* Sidebar - only show if user is logged in and not on mobile (simplified for now) */}
+      {/* Sidebar - Desktop */}
       <aside className="w-64 border-r border-border-dim bg-card-bg p-8 hidden md:flex flex-col shrink-0">
         <div className="flex items-center gap-3 mb-12">
           <div className="w-8 h-8 bg-primary rounded flex items-center justify-center font-bold text-bg-dark">Q</div>
@@ -37,8 +42,11 @@ function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="font-bold text-sm truncate px-4">{userData?.username || 'Guest Scholar'}</div>
-            <div className="text-[10px] uppercase tracking-wider text-primary font-black mt-1">
-              {userData ? ((userData.avgScore || 0) > 0.8 ? 'Expert Rank' : 'Rising Star') : 'Initializing...'}
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <span className="text-[10px] font-black bg-primary text-bg-dark px-1.5 py-0.5 rounded leading-none">L{userData?.level || 1}</span>
+              <span className="text-[10px] uppercase tracking-wider text-primary font-black">
+                {getRank(userData?.level || 1)}
+              </span>
             </div>
           </div>
         )}
@@ -81,19 +89,96 @@ function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeMenu}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] md:hidden"
+            />
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 w-80 bg-bg-dark border-r border-border-dim p-8 z-[101] md:hidden flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-12">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary rounded flex items-center justify-center font-bold text-bg-dark">Q</div>
+                  <span className="text-lg font-bold tracking-tight">QuizPro</span>
+                </div>
+                <button onClick={closeMenu} className="p-2 hover:bg-white/5 rounded-lg">
+                  <X size={24} />
+                </button>
+              </div>
+
+              {user && (
+                <div className="mb-10 px-2 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
+                    {userData?.photoURL ? (
+                      <img src={userData.photoURL} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <UserIcon className="text-primary" size={24} />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm">{userData?.username}</div>
+                    <div className="flex items-center gap-2">
+                       <span className="text-[9px] font-black bg-primary text-bg-dark px-1.5 py-0.5 rounded leading-none">L{userData?.level || 1}</span>
+                       <span className="text-[9px] font-black uppercase text-primary tracking-widest">{getRank(userData?.level || 1)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <nav className="flex-1 space-y-4">
+                <Link to="/" onClick={closeMenu} className={`side-nav-item text-lg py-4 ${location === '/' ? 'active' : ''}`}>
+                  <HomeIcon size={22} /> Home
+                </Link>
+                <Link to="/leaderboard" onClick={closeMenu} className={`side-nav-item text-lg py-4 ${location === '/leaderboard' ? 'active' : ''}`}>
+                  <Trophy size={22} /> Leaderboard
+                </Link>
+                <Link to="/contact" onClick={closeMenu} className={`side-nav-item text-lg py-4 ${location === '/contact' ? 'active' : ''}`}>
+                  <MessageSquare size={22} /> Contact Us
+                </Link>
+                {user && (
+                  <>
+                    <Link to="/dashboard" onClick={closeMenu} className={`side-nav-item text-lg py-4 ${location === '/dashboard' ? 'active' : ''}`}>
+                      <LayoutDashboard size={22} /> Dashboard
+                    </Link>
+                    <Link to="/profile" onClick={closeMenu} className={`side-nav-item text-lg py-4 ${location === '/profile' ? 'active' : ''}`}>
+                      <UserIcon size={22} /> Profile
+                    </Link>
+                    <button 
+                      onClick={() => { signOut(auth); closeMenu(); }}
+                      className="side-nav-item w-full text-left text-red-400 py-4 mt-auto"
+                    >
+                      <LogOut size={22} /> Sign Out
+                    </button>
+                  </>
+                )}
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="md:hidden border-b border-border-dim bg-card-bg p-4 flex justify-between items-center sticky top-0 z-50">
-           <Link to="/" className="font-bold text-primary italic">QuizPro</Link>
-           <div className="flex gap-4">
-             <Link to="/leaderboard"><Trophy size={20} /></Link>
-             <Link to="/contact"><MessageSquare size={20} /></Link>
-             <Link to="/dashboard"><LayoutDashboard size={20} /></Link>
-             <Link to="/profile"><UserIcon size={20} /></Link>
-           </div>
+        <header className="md:hidden border-b border-border-dim bg-bg-dark p-4 flex justify-between items-center sticky top-0 z-50">
+           <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2">
+             <Menu size={24} />
+           </button>
+           <Link to="/" className="font-bold text-primary italic text-xl tracking-tighter">QuizPro</Link>
+           <div className="w-10" /> {/* Spacer */}
         </header>
 
-        <main className="flex-1 p-8 md:p-12">
+        <main className="flex-1 p-8 md:p-12 relative">
           {children}
         </main>
       </div>

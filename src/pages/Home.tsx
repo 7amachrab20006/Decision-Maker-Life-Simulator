@@ -40,7 +40,7 @@ export function Home() {
             Think <span className="text-primary italic font-serif">Deeply</span>. <br />Learn Daily.
           </h1>
           <p className="text-xl text-text-dim max-w-2xl mx-auto font-light leading-relaxed">
-            Elevate your cognitive boundaries with curated challenges across 12 distinct knowledge domains.
+            Elevate your cognitive boundaries with <span className="text-white font-medium">Dynamic AI challenges</span> curated across 12 distinct knowledge domains.
           </p>
         </motion.div>
 

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { Trophy, Medal, Star, User as UserIcon } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, getRank } from '../lib/utils';
 
 interface LeaderboardEntry {
   userId: string;
@@ -72,11 +72,16 @@ export function Leaderboard() {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-xl font-bold tracking-tight">{leader.username}</div>
+                    <div className="text-xl font-bold tracking-tight flex items-center gap-2">
+                       {leader.username}
+                       <span className="text-[10px] font-black bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded leading-none">L{(leader as any).level || 1}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                        <span className="stat-label-dim">{leader.totalQuizzes} Quizzes</span>
                        <span className="w-1 h-1 bg-white/20 rounded-full"></span>
-                       <span className="text-[10px] uppercase font-black tracking-widest text-primary">Ranked Candidate</span>
+                       <span className="text-[10px] uppercase font-black tracking-widest text-primary">
+                         {getRank((leader as any).level || 1)}
+                       </span>
                     </div>
                   </div>
                 </div>

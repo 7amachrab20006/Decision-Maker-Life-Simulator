@@ -46,6 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: firebaseUser.email || '',
                 totalQuizzes: 0,
                 avgScore: 0,
+                level: 1,
+                xp: 0,
+                streak: 0,
+                highestStreak: 0,
                 createdAt: new Date().toISOString(),
                 lastActivity: new Date().toISOString()
               };
